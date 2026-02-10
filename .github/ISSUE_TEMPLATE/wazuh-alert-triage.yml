@@ -1,0 +1,163 @@
+name: "Alert triage (Wazuh)"
+description: "Create a SOC case from a Wazuh alert (manual case management MVP)"
+title: "[TRIAGE] <rule.id> - <agent.name> - <short summary>"
+labels: ["triage", "wazuh"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to document triage steps consistently. Keep it short but complete.
+
+  - type: input
+    id: alert_timestamp
+    attributes:
+      label: "Alert timestamp (UTC)"
+      description: "Example: 2026-02-05T17:32:44Z"
+      placeholder: "YYYY-MM-DDTHH:MM:SSZ"
+    validations:
+      required: true
+
+  - type: input
+    id: agent_name
+    attributes:
+      label: "Agent name"
+      placeholder: "LAPTOP-RH48MVJ8"
+    validations:
+      required: true
+
+  - type: input
+    id: agent_id
+    attributes:
+      label: "Agent ID"
+      placeholder: "001"
+    validations:
+      required: true
+
+  - type: input
+    id: rule_id
+    attributes:
+      label: "Rule ID"
+      placeholder: "60122"
+    validations:
+      required: true
+
+  - type: input
+    id: rule_level
+    attributes:
+      label: "Rule level"
+      placeholder: "5"
+    validations:
+      required: true
+
+  - type: textarea
+    id: rule_description
+    attributes:
+      label: "Rule description"
+      placeholder: "Logon Failure - Unknown user or bad password"
+    validations:
+      required: true
+
+  - type: textarea
+    id: detection_summary
+    attributes:
+      label: "Detection summary (what happened)"
+      description: "1–3 lines describing the alert and context."
+      placeholder: "Multiple 4625 failures for user 'noexiste' from ::1 on LAPTOP-RH48MVJ8 via seclogo/runas."
+    validations:
+      required: true
+
+  - type: textarea
+    id: key_fields
+    attributes:
+      label: "Key fields (copy from alert)"
+      description: "Paste the most useful fields from the raw event."
+      placeholder: |
+        eventID:
+        targetUserName:
+        targetDomainName:
+        ipAddress:
+        workstationName:
+        logonType:
+        processName:
+        status/subStatus:
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "Triage severity"
+      options:
+        - "Low"
+        - "Medium"
+        - "High"
+        - "Critical"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: "SOC verdict"
+      options:
+        - "Benign / Expected"
+        - "Suspicious"
+        - "Malicious"
+        - "False Positive"
+        - "Needs more data"
+    validations:
+      required: true
+
+  - type: textarea
+    id: triage_steps
+    attributes:
+      label: "Triage steps performed"
+      description: "Bullet points of what you checked (dashboards, raw logs, correlation)."
+      placeholder: |
+        - Checked SOC Overview dashboard time range
+        - Filtered by agent.id=001 and rule.id=60122
+        - Confirmed source is localhost (::1) and logonType=2
+        - Verified user does not exist (intentional test)
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "Evidence / queries"
+      description: "Paste any OpenSearch/Wazuh queries or screenshots references."
+      placeholder: |
+        OpenSearch:
+        - _index:wazuh-alerts-4.x-* AND data.win.system.eventID:4625 AND agent.id:001
+    validations:
+      required: false
+
+  - type: textarea
+    id: containment
+    attributes:
+      label: "Containment / actions taken"
+      placeholder: |
+        - None (test)
+        - Or: Disabled account, isolated host, blocked IP, etc.
+    validations:
+      required: false
+
+  - type: textarea
+    id: followups
+    attributes:
+      label: "Follow-ups / next steps"
+      placeholder: |
+        - Add threshold alerting for repeated 4625 in 10 minutes
+        - Confirm local admin policies
+    validations:
+      required: false
+
+  - type: textarea
+    id: closure
+    attributes:
+      label: "Closure note"
+      description: "1–2 lines explaining why you closed/escalated."
+      placeholder: "Closed as benign: intentional runas test with non-existent user, source ::1, single host."
+    validations:
+      required: true
