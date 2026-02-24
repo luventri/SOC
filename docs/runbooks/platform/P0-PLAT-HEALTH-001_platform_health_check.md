@@ -59,49 +59,67 @@ Buenas prácticas mínimas:
 
 ```bash
 cd /home/socadmin/soc-cases
+```
+2) Verificar que el script existe y es ejecutable:
 
-Verificar que el script existe y es ejecutable:
-
+```bash
 ls -l tools/platform_health.sh
 chmod +x tools/platform_health.sh
+```
 
-(Opcional) Verificar que el archivo de secretos existe y permisos:
+3) (Opcional) Verificar que el archivo de secretos existe y permisos:
 
+```bash
 ls -l ~/.secrets/mini-soc.env
 chmod 600 ~/.secrets/mini-soc.env
+```
 
-Ejecutar el check:
+4) Ejecutar el check:
 
+```bash
 bash tools/platform_health.sh
+```
 
-Confirmar que se generó el artefacto (por fecha):
+5) Confirmar que se generó el artefacto (por fecha):
 
+```bash
 ls -l artifacts/platform/health/platform_health_YYYY-MM-DD.md
-Pasos (con Git)
+```
 
-Revisar cambios:
+## Pasos (con Git)
 
+1) Revisar cambios:
+
+```bash
 git status
+```
 
-Agregar el artefacto nuevo/modificado:
+2) Agregar el artefacto nuevo/modificado:
 
+```bash
 git add artifacts/platform/health/platform_health_YYYY-MM-DD.md
+```
 
-Commit (mensaje sugerido):
+3) Commit (mensaje sugerido):
 
+```bash
 git commit -m "chore: platform health check YYYY-MM-DD"
+```
 
-Push:
+4) Push:
 
+```bash
 git push origin main
-PASS / FAIL
-PASS (criterios mínimos)
+```
 
-Docker Compose muestra contenedores del stack en running (sin reinicios constantes).
+## PASS / FAIL
+## PASS (criterios mínimos)
 
-El chequeo de indexer health responde OK (HTTP 200 o estado equivalente) cuando está configurado el auth.
+- Docker Compose muestra contenedores del stack en running (sin reinicios constantes).
 
-El artefacto platform_health_YYYY-MM-DD.md se generó y contiene:
+- El chequeo de indexer health responde OK (HTTP 200 o estado equivalente) cuando está configurado el auth.
+
+- El artefacto platform_health_YYYY-MM-DD.md se generó y contiene:
 
 Fecha/hora de ejecución
 
