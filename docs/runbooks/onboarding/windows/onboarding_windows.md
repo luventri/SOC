@@ -431,3 +431,37 @@ A single run produces these sanitized artifacts (no secrets):
 - `--host` targets M2/M3 using `data.win.system.computer`.
 - `--agent` targets M5/M6 using `agent.name`.
 - Optional: `--date YYYY-MM-DD` (default: today).
+
+---
+
+## Gate DQ v1 — Issue on FAIL (automated)
+
+When the onboarding gate finishes with a non-zero exit code (FAIL), it creates a GitHub Issue automatically.
+
+### Trigger
+- `tools/onboarding/windows/windows_onboarding_audit.sh` exits with `!= 0`.
+
+### Labels
+The created issue uses these labels:
+- `windows`
+- `onboarding`
+- `coverage`
+- `telemetry`
+(Optional: `data-quality` if the label exists in the repo.)
+
+### Anti-spam (dedupe)
+To avoid spamming issues:
+- The helper checks if an **OPEN** issue with the same title already exists.
+- If it exists, it prints `OK: issue already exists (open): <url>` and does not create a duplicate.
+
+### Evidence
+On FAIL, the gate writes a sanitized issue body file:
+- `artifacts/onboarding/windows/gate_fail_YYYY-MM-DD.md`
+
+And you should keep a sanitized execution log for auditing:
+- `artifacts/onboarding/windows/gate_run_FAIL_YYYY-MM-DD.log`
+
+### Example (audited)
+- Issue created: `https://github.com/luventri/SOC/issues/11`
+- Title: `Windows onboarding gate FAIL (LAPTOP-RH48MVJ8) 2026-02-28`
+- Labels: `windows,onboarding,coverage,telemetry`

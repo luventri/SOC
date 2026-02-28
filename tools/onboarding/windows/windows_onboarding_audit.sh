@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+
 usage() {
   cat <<'USAGE'
 Usage:
@@ -280,4 +282,37 @@ if [[ "${FAIL}" -eq 0 ]]; then
   exit 0
 fi
 echo "FINAL: FAIL (one or more MUST validations failed)"
+
+# Issue on FAIL (no secrets). Creates a single issue (dedupe by title).
+ISSUE_BODY="${OUTDIR}/gate_fail_${DATE}.md"
+{
+  echo "# Windows onboarding gate — FAIL"
+  echo
+  echo "- date: ${DATE}"
+  echo "- host (M2/M3): ${HOST}"
+  echo "- agent (M1/M5/M6): ${AGENT}"
+  echo
+  echo "## Summary"
+  echo "- M1 Agent active: ${M1R}"
+  echo "- M2 Security ingest: ${M2R}"
+  echo "- M3 Sysmon ingest: ${M3R}"
+  echo "- M4 Host consistency: ${M4R}"
+  echo "- M5 Syscollector: ${M5R}"
+  echo "- M6 SCA: ${M6R}"
+  echo
+  echo "## Artifacts"
+  echo "- ${M1}"
+  echo "- ${M2}"
+  echo "- ${M3}"
+  echo "- ${M4}"
+  echo "- ${M5}"
+  echo "- ${M6}"
+  echo
+  echo "## Result"
+  echo "**FAIL**"
+} > "${ISSUE_BODY}"
+
+ISSUE_TITLE="Windows onboarding gate FAIL (${AGENT}) ${DATE}"
+"${REPO_ROOT}/tools/onboarding/windows/create_issue_on_fail.sh" "${ISSUE_TITLE}" "${ISSUE_BODY}" || true
+
 exit 1
