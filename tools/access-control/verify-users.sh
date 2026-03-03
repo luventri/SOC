@@ -15,8 +15,14 @@ mkdir -p "$RAW_DIR"
 INDEXER_CONTAINER="${INDEXER_CONTAINER:-single-node-wazuh.indexer-1}"
 SECRETS_FILE="${SECRETS_FILE:-$HOME/.secrets/mini-soc.env}"
 USERS_YML="${USERS_YML:-$REPO_ROOT/tools/access-control/users.yml}"
-DASHBOARDS_URL="${DASHBOARDS_URL:-https://192.168.242.128}"
+DASHBOARDS_URL="${DASHBOARDS_URL:-https://wazuh.dashboard}"
 OSD_VERSION="${OSD_VERSION:-2.13.0}"
+INDEXER_CA="${INDEXER_CA:-/home/socadmin/wazuh-docker/single-node/config/wazuh_indexer_ssl_certs/root-ca.pem}"
+INDEXER_HOST="${INDEXER_HOST:-wazuh.indexer}"
+INDEXER_ADDR="${INDEXER_ADDR:-127.0.0.1}"
+DASHBOARD_CA="${DASHBOARD_CA:-/home/socadmin/wazuh-docker/single-node/config/wazuh_indexer_ssl_certs/root-ca.pem}"
+DASHBOARD_HOST="${DASHBOARD_HOST:-wazuh.dashboard}"
+DASHBOARD_ADDR="${DASHBOARD_ADDR:-192.168.242.128}"
 
 # --- PASS/FAIL state ---
 PASS=true
@@ -50,14 +56,28 @@ if [[ "$DOCKER" == "sudo docker" ]]; then
   sudo -v
 fi
 
+if [[ ! -f "$INDEXER_CA" ]]; then
+  echo "ERROR: missing INDEXER_CA file: $INDEXER_CA" >&2
+  exit 1
+fi
+if [[ ! -f "$DASHBOARD_CA" ]]; then
+  echo "ERROR: missing DASHBOARD_CA file: $DASHBOARD_CA" >&2
+  exit 1
+fi
+
+INDEXER_BASE_URL="https://${INDEXER_HOST}:9200"
+INDEXER_RESOLVE_ARG="--resolve ${INDEXER_HOST}:9200:${INDEXER_ADDR}"
+DASHBOARDS_RESOLVE_ARG="--resolve ${DASHBOARD_HOST}:443:${DASHBOARD_ADDR}"
+
 admin_curl_to_file() {
   local url="$1"
   local outfile="$2"
   $DOCKER exec -i "$INDEXER_CONTAINER" sh -lc \
-"curl -sk \
+"curl -sS \
   --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
   --cert /usr/share/wazuh-indexer/certs/admin.pem \
   --key  /usr/share/wazuh-indexer/certs/admin-key.pem \
+  --resolve wazuh.indexer:9200:127.0.0.1 \
   '$url'" > "$outfile" 2>/dev/null || true
 }
 
@@ -81,8 +101,14 @@ PY
 
 get_secret() {
   local var="$1"
+  local val=""
   [ -f "$SECRETS_FILE" ] || return 0
-  grep -E "^${var}=" "$SECRETS_FILE" | head -n1 | cut -d= -f2- || true
+  val="$(grep -E "^${var}=" "$SECRETS_FILE" | head -n1 | cut -d= -f2- || true)"
+  # Accept quoted values in env files: VAR='value' or VAR="value"
+  if [[ "$val" =~ ^\".*\"$ ]] || [[ "$val" =~ ^\'.*\'$ ]]; then
+    val="${val:1:${#val}-2}"
+  fi
+  printf '%s' "$val"
 }
 
 list_mapped_users_from_users_yml() {
@@ -98,11 +124,12 @@ list_mapped_users_from_users_yml() {
 
 pick_sample_wazuh_index() {
   $DOCKER exec -i "$INDEXER_CONTAINER" sh -lc \
-"curl -sk \
+"curl -sS \
   --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
   --cert /usr/share/wazuh-indexer/certs/admin.pem \
   --key  /usr/share/wazuh-indexer/certs/admin-key.pem \
-  'https://127.0.0.1:9200/_cat/indices/wazuh-alerts-*?h=index&expand_wildcards=all'" \
+  --resolve wazuh.indexer:9200:127.0.0.1 \
+  'https://wazuh.indexer:9200/_cat/indices/wazuh-alerts-*?h=index&expand_wildcards=all'" \
   | tr -d '\r' | head -n 1 || true
 }
 
@@ -116,15 +143,15 @@ log "OUT: $OUT"
 log ""
 
 log "=== GLOBAL AUDIT (admin cert, no passwords) ==="
-admin_curl_to_file "https://127.0.0.1:9200/_plugins/_security/api/internalusers" "$RAW_DIR/internalusers.json"
+admin_curl_to_file "https://wazuh.indexer:9200/_plugins/_security/api/internalusers" "$RAW_DIR/internalusers.json"
 ensure_json_or_die "$RAW_DIR/internalusers.json" "internalusers"
 log "saved: $RAW_DIR/internalusers.json"
 
-admin_curl_to_file "https://127.0.0.1:9200/_plugins/_security/api/rolesmapping" "$RAW_DIR/rolesmapping.json"
+admin_curl_to_file "https://wazuh.indexer:9200/_plugins/_security/api/rolesmapping" "$RAW_DIR/rolesmapping.json"
 ensure_json_or_die "$RAW_DIR/rolesmapping.json" "rolesmapping"
 log "saved: $RAW_DIR/rolesmapping.json"
 
-admin_curl_to_file "https://127.0.0.1:9200/_plugins/_security/api/roles" "$RAW_DIR/roles.json"
+admin_curl_to_file "https://wazuh.indexer:9200/_plugins/_security/api/roles" "$RAW_DIR/roles.json"
 ensure_json_or_die "$RAW_DIR/roles.json" "roles"
 log "saved: $RAW_DIR/roles.json"
 log ""
@@ -214,11 +241,12 @@ log ""
 
 log "=== CACHE FLUSH (admin cert) ==="
 $DOCKER exec -i "$INDEXER_CONTAINER" sh -lc \
-"curl -sk \
+"curl -sS \
   --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
   --cert /usr/share/wazuh-indexer/certs/admin.pem \
   --key  /usr/share/wazuh-indexer/certs/admin-key.pem \
-  -XDELETE 'https://127.0.0.1:9200/_plugins/_security/api/cache'" \
+  --resolve wazuh.indexer:9200:127.0.0.1 \
+  -XDELETE 'https://wazuh.indexer:9200/_plugins/_security/api/cache'" \
 | tee -a "$OUT"
 log ""
 
@@ -256,42 +284,42 @@ while read -r USER PASS_ENV; do
   fi
 
   log "[F1] authinfo (indexer) -> should be 200"
-  curl -sk -u "${USER}:${USER_PASS}" "https://127.0.0.1:9200/_plugins/_security/authinfo" \
+  curl -sS --cacert "${INDEXER_CA}" ${INDEXER_RESOLVE_ARG} -u "${USER}:${USER_PASS}" "${INDEXER_BASE_URL}/_plugins/_security/authinfo" \
     | tee "$RAW_DIR/authinfo-${USER}.json" >/dev/null
   log "saved: $RAW_DIR/authinfo-${USER}.json"
 
   log "[F2] dashboards saved_objects/_find -> expected 200 for analyst"
-  curl -sk -u "${USER}:${USER_PASS}" -H "osd-xsrf: true" -H "osd-version: ${OSD_VERSION}" \
+  curl -sS --cacert "${DASHBOARD_CA}" ${DASHBOARDS_RESOLVE_ARG} -u "${USER}:${USER_PASS}" -H "osd-xsrf: true" -H "osd-version: ${OSD_VERSION}" \
     -o /dev/null -w "saved_objects_find HTTP=%{http_code}\n" \
     "${DASHBOARDS_URL}/api/saved_objects/_find?type=index-pattern&per_page=1" \
     | tee -a "$OUT"
 
   if [ -n "${SAMPLE_IDX}" ]; then
     log "[F3] wazuh index search -> expected 200 for analyst"
-    curl -sk -u "${USER}:${USER_PASS}" -H 'Content-Type: application/json' \
+    curl -sS --cacert "${INDEXER_CA}" ${INDEXER_RESOLVE_ARG} -u "${USER}:${USER_PASS}" -H 'Content-Type: application/json' \
       -d '{"size":0,"query":{"match_all":{}}}' \
       -o /dev/null -w "wazuh_search HTTP=%{http_code}\n" \
-      "https://127.0.0.1:9200/${SAMPLE_IDX}/_search" \
+      "${INDEXER_BASE_URL}/${SAMPLE_IDX}/_search" \
       | tee -a "$OUT"
 
     log "[F4] NEGATIVE: write to wazuh index -> expected 403 for analyst"
-    curl -sk -u "${USER}:${USER_PASS}" -H 'Content-Type: application/json' \
+    curl -sS --cacert "${INDEXER_CA}" ${INDEXER_RESOLVE_ARG} -u "${USER}:${USER_PASS}" -H 'Content-Type: application/json' \
       -d "{\"rbac_test\":\"deny_write\",\"user\":\"${USER}\",\"ts\":\"$(date -Is)\"}" \
       -o "$RAW_DIR/deny_write-${USER}.json" -w "wazuh_write HTTP=%{http_code}\n" \
-      "https://127.0.0.1:9200/${SAMPLE_IDX}/_doc/rbac-deny-write-test-${USER}-${TS}" \
+      "${INDEXER_BASE_URL}/${SAMPLE_IDX}/_doc/rbac-deny-write-test-${USER}-${TS}" \
       | tee -a "$OUT"
   else
     log "[F3/F4] SKIP: no wazuh-alerts-* index found"
   fi
 
   log "[F5] NEGATIVE: Security API -> expected 403 for analyst"
-  curl -sk -u "${USER}:${USER_PASS}" -o /dev/null -w "security_api_rolesmapping HTTP=%{http_code}\n" \
-    "https://127.0.0.1:9200/_plugins/_security/api/rolesmapping" | tee -a "$OUT"
-  curl -sk -u "${USER}:${USER_PASS}" -o /dev/null -w "security_api_roles HTTP=%{http_code}\n" \
-    "https://127.0.0.1:9200/_plugins/_security/api/roles" | tee -a "$OUT"
+  curl -sS --cacert "${INDEXER_CA}" ${INDEXER_RESOLVE_ARG} -u "${USER}:${USER_PASS}" -o /dev/null -w "security_api_rolesmapping HTTP=%{http_code}\n" \
+    "${INDEXER_BASE_URL}/_plugins/_security/api/rolesmapping" | tee -a "$OUT"
+  curl -sS --cacert "${INDEXER_CA}" ${INDEXER_RESOLVE_ARG} -u "${USER}:${USER_PASS}" -o /dev/null -w "security_api_roles HTTP=%{http_code}\n" \
+    "${INDEXER_BASE_URL}/_plugins/_security/api/roles" | tee -a "$OUT"
 
   log "[F6] NEGATIVE: create saved_object -> expected 401/403 for analyst"
-  curl -sk -u "${USER}:${USER_PASS}" \
+  curl -sS --cacert "${DASHBOARD_CA}" ${DASHBOARDS_RESOLVE_ARG} -u "${USER}:${USER_PASS}" \
     -H "osd-xsrf: true" -H "osd-version: ${OSD_VERSION}" \
     -H "Content-Type: application/json" \
     -o "$RAW_DIR/deny_savedobject_create-${USER}.json" \

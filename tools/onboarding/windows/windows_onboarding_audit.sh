@@ -56,8 +56,21 @@ if [[ -z "${WAZUH_INDEXER_USER:-}" || -z "${WAZUH_INDEXER_PASS:-}" ]]; then
   exit 2
 fi
 
-INDEXER_URL="${OPS_INDEXER_URL:-https://127.0.0.1:9200}"
+INDEXER_HOST="${OPS_INDEXER_HOSTNAME:-wazuh.indexer}"
+INDEXER_ADDR="${OPS_INDEXER_ADDR:-127.0.0.1}"
+INDEXER_URL="${OPS_INDEXER_URL:-https://${INDEXER_HOST}:9200}"
+INDEXER_CA="${OPS_INDEXER_CA:-/home/socadmin/wazuh-docker/single-node/config/wazuh_indexer_ssl_certs/root-ca.pem}"
 ARCHIVES_INDEX="${OPS_ARCHIVES_INDEX:-wazuh-archives-4.x-*}"
+
+if [[ ! -f "${INDEXER_CA}" ]]; then
+  echo "FAIL: missing indexer CA file: ${INDEXER_CA}"
+  exit 2
+fi
+
+CURL_TLS=(--cacert "${INDEXER_CA}")
+if [[ "${INDEXER_URL}" == "https://${INDEXER_HOST}:9200"* ]]; then
+  CURL_TLS+=(--resolve "${INDEXER_HOST}:9200:${INDEXER_ADDR}")
+fi
 
 OUTDIR="artifacts/onboarding/windows"
 mkdir -p "${OUTDIR}"
@@ -166,7 +179,7 @@ query_to_artifact() {
 
   local tmp http
   tmp="$(mktemp)"
-  http="$(curl -sk -u "${WAZUH_INDEXER_USER}:${WAZUH_INDEXER_PASS}" -H 'Content-Type: application/json' \
+  http="$(curl -sS "${CURL_TLS[@]}" -u "${WAZUH_INDEXER_USER}:${WAZUH_INDEXER_PASS}" -H 'Content-Type: application/json' \
     -o "${tmp}" -w "%{http_code}" \
     "${INDEXER_URL}/${ARCHIVES_INDEX}/_search" -d "${payload}" || true)"
 

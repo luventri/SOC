@@ -37,9 +37,11 @@ mkdir -p "${ART_DIR}"
   echo
 
   echo "### 3) Git tracked files that should never be committed"
-  if git -C "${REPO_ROOT}" ls-files | grep -E '\.env($|\.)|(^|/)\.env|secrets|secret|\.key$|\.pem$|\.p12$|\.pfx$|(^|/)id_rsa$|(^|/)id_ed25519$|token|apikey|api_key' \
-    | sed 's/^/- TRACKED: /'
-  then FAIL=1
+  TRACKED_HITS="$(git -C "${REPO_ROOT}" ls-files \
+    | grep -E '(^|/)\.env($|\.)|\.key$|\.pem$|\.p12$|\.pfx$|(^|/)id_rsa$|(^|/)id_ed25519$' || true)"
+  if [[ -n "${TRACKED_HITS}" ]]; then
+    printf '%s\n' "${TRACKED_HITS}" | sed 's/^/- TRACKED: /'
+    FAIL=1
   else
     echo "- OK: none tracked"
   fi

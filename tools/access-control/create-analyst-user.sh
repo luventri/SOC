@@ -84,10 +84,11 @@ log ""
 # Read backend_roles from existing internal user "analyst" (admin cert). Fallback to known-good roles.
 ANALYST_JSON="$RAW_DIR/internaluser-analyst.json"
 $DOCKER exec -i "$INDEXER_CONTAINER" sh -lc \
-"curl -sk --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
+"curl -sS --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
   --cert /usr/share/wazuh-indexer/certs/admin.pem \
   --key  /usr/share/wazuh-indexer/certs/admin-key.pem \
-  https://127.0.0.1:9200/_plugins/_security/api/internalusers/analyst" \
+  --resolve wazuh.indexer:9200:127.0.0.1 \
+  https://wazuh.indexer:9200/_plugins/_security/api/internalusers/analyst" \
 > "$ANALYST_JSON" 2>/dev/null || true
 
 BACKEND_ROLES="$(python3 - <<PY
@@ -188,10 +189,11 @@ log ""
 log "-- flush security cache (admin cert) --"
 CACHE_OUT="$RAW_DIR/cache_flush.txt"
 $DOCKER exec -i "$INDEXER_CONTAINER" sh -lc \
-"curl -sk --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
+"curl -sS --cacert /usr/share/wazuh-indexer/certs/root-ca.pem \
   --cert /usr/share/wazuh-indexer/certs/admin.pem \
   --key  /usr/share/wazuh-indexer/certs/admin-key.pem \
-  -XDELETE https://127.0.0.1:9200/_plugins/_security/api/cache" \
+  --resolve wazuh.indexer:9200:127.0.0.1 \
+  -XDELETE https://wazuh.indexer:9200/_plugins/_security/api/cache" \
 | tee "$CACHE_OUT" >/dev/null || true
 log "saved: $CACHE_OUT"
 log ""

@@ -14,7 +14,10 @@ set -euo pipefail
 # Credentials:
 #   Uses WAZUH_INDEXER_USER / WAZUH_INDEXER_PASS from environment (do not print).
 
-INDEXER_URL="${OPS_INDEXER_URL:-https://127.0.0.1:9200}"
+INDEXER_HOST="${OPS_INDEXER_HOSTNAME:-wazuh.indexer}"
+INDEXER_ADDR="${OPS_INDEXER_ADDR:-127.0.0.1}"
+INDEXER_URL="${OPS_INDEXER_URL:-https://${INDEXER_HOST}:9200}"
+INDEXER_CA="${OPS_INDEXER_CA:-/home/socadmin/wazuh-docker/single-node/config/wazuh_indexer_ssl_certs/root-ca.pem}"
 HOSTNAME="${OPS_HOSTNAME:-}"
 WINDOW_MIN="${OPS_INGEST_WINDOW_MIN:-60}"
 CHANNELS_CSV="${OPS_CHANNELS_CSV:-Security,Microsoft-Windows-Sysmon/Operational}"
@@ -29,9 +32,19 @@ if [[ -z "${WAZUH_INDEXER_USER:-}" || -z "${WAZUH_INDEXER_PASS:-}" ]]; then
   exit 2
 fi
 
+if [[ ! -f "${INDEXER_CA}" ]]; then
+  echo "FAIL: missing indexer CA file: ${INDEXER_CA}"
+  exit 2
+fi
+
+CURL_TLS=(--cacert "${INDEXER_CA}")
+if [[ "${INDEXER_URL}" == "https://${INDEXER_HOST}:9200"* ]]; then
+  CURL_TLS+=(--resolve "${INDEXER_HOST}:9200:${INDEXER_ADDR}")
+fi
+
 INDEX="wazuh-archives-4.x-$(date +%Y.%m.%d)"
 
-HTTP_IDX="$(curl -sk -u "${WAZUH_INDEXER_USER}:${WAZUH_INDEXER_PASS}" -o /dev/null -w "%{http_code}" "${INDEXER_URL}/${INDEX}")"
+HTTP_IDX="$(curl -sS "${CURL_TLS[@]}" -u "${WAZUH_INDEXER_USER}:${WAZUH_INDEXER_PASS}" -o /dev/null -w "%{http_code}" "${INDEXER_URL}/${INDEX}" || true)"
 if [[ "${HTTP_IDX}" != "200" ]]; then
   echo "FAIL: index not available today: ${INDEX} (HTTP=${HTTP_IDX})"
   exit 2
@@ -88,7 +101,7 @@ JSON
 
   local tmp http
   tmp="$(mktemp)"
-  http="$(curl -sk -u "${WAZUH_INDEXER_USER}:${WAZUH_INDEXER_PASS}" -H 'Content-Type: application/json' \
+  http="$(curl -sS "${CURL_TLS[@]}" -u "${WAZUH_INDEXER_USER}:${WAZUH_INDEXER_PASS}" -H 'Content-Type: application/json' \
     -o "${tmp}" -w "%{http_code}" \
     "${INDEXER_URL}/${INDEX}/_search" -d "${payload}" || true)"
   echo "${http}:${tmp}"
