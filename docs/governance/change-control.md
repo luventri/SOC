@@ -16,10 +16,12 @@ This policy defines how changes are proposed, reviewed, and merged in `luventri/
 Direct pushes to `main` are prohibited by policy.
 
 ## Required checks (must pass)
-Current required CI workflows for PRs:
-- `Secret scanning (gitleaks)`
-- `Security policy checks`
-- `Lint and audit controls`
+Current required check contexts for PRs targeting `main`:
+- `Secret scanning (gitleaks) / gitleaks (pull_request)`
+- `Security policy checks / policy (pull_request)`
+- `Lint and audit controls / lint-audit (pull_request)`
+
+These are check-run contexts (`workflow / job`) and must match branch protection exactly.
 
 If workflow names change, update this list and branch protection settings in the same PR.
 
@@ -143,9 +145,9 @@ GitHub UI path:
 3. `Add rule` (or rulesets equivalent) for `main`
 4. Enable the required settings listed above
 5. Add required checks:
-   - `Secret scanning (gitleaks)`
-   - `Security policy checks`
-   - `Lint and audit controls`
+   - `Secret scanning (gitleaks) / gitleaks (pull_request)`
+   - `Security policy checks / policy (pull_request)`
+   - `Lint and audit controls / lint-audit (pull_request)`
 
 `gh` CLI reference commands (reproducible evidence):
 ```bash

@@ -14,6 +14,10 @@ docs/** @luventri
 # CI/CD and security policies
 .github/workflows/** @luventri
 
+# Protect governance ownership controls
+/CODEOWNERS @luventri
+/docs/governance/change-control.md @luventri
+
 # Artifacts:
 # No strict owner assignment by policy.
 # Still requires secret-safe review before merge.
