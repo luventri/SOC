@@ -8,7 +8,7 @@ Documentación operativa y de gobierno para el home SOC.
 - `docs/governance/secrets-management.md`
 
 ## Metrics
-- `docs/metrics.md`
+- `docs/governance/metrics.md`
 
 ## Runbooks
 ### Plataforma
