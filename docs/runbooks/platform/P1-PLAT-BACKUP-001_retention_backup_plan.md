@@ -2,8 +2,8 @@
 
 **Check ID:** P1-PLAT-BACKUP-001  
 **Scripts:**  
-- `tools/backup_run.sh`  
-- `tools/backup_restore_test.sh`  
+- `tools/backup/backup_run.sh`  
+- `tools/backup/backup_restore_test.sh`  
 
 **Evidencia:** `artifacts/platform/backup/backup_test_YYYY-MM-DD.md`  
 **Backup destino:** `socbackup@192.168.242.129:/srv/soc-backups/latest`  
@@ -101,7 +101,7 @@ En `soc-core`:
 
 ```bash
 cd /home/socadmin/soc-cases
-./tools/backup_run.sh
+./tools/backup/backup_run.sh
 ```
 
 Qué hace:
@@ -117,7 +117,7 @@ Restore test (sin tocar producción):
 
 ```bash
 cd /home/socadmin/soc-cases
-./tools/backup_restore_test.sh
+./tools/backup/backup_restore_test.sh
 ```
 
 ### Criterio de éxito (restore verificado)
@@ -170,24 +170,24 @@ Si `soc-core` se pierde, los scripts no estarán disponibles localmente. Procedi
    - `git clone https://github.com/luventri/soc.git`
 4. Configurar acceso SSH por clave hacia `soc-backup` y verificar conectividad.
 5. Ejecutar:
-   - `./tools/backup_restore_apply.sh --i-understand-this-will-restore`
-6. Levantar Wazuh y validar con `./tools/platform_health.sh`.
+   - `./tools/backup/backup_restore_apply.sh --i-understand-this-will-restore`
+6. Levantar Wazuh y validar con `./tools/platform/platform_health.sh`.
 
 ## Restore APPLY (restauración real en DR)
 
 Este restore aplica cambios (config + volúmenes) y está pensado para un host nuevo (p.ej. `soc-core2`) o DR.
 
 Script:
-- `tools/backup_restore_apply.sh`
+- `tools/backup/backup_restore_apply.sh`
 
 Ejecutar:
 ```bash
 cd /home/socadmin/soc-cases
-./tools/backup_restore_apply.sh --i-understand-this-will-restore
+./tools/backup/backup_restore_apply.sh --i-understand-this-will-restore
 ```
 
 Luego levantar el stack:
 ```bash
 docker compose -f /home/socadmin/wazuh-docker/single-node/docker-compose.yml up -d
-./tools/platform_health.sh
+./tools/platform/platform_health.sh
 ```

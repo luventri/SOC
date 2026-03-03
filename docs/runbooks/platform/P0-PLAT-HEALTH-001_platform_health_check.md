@@ -2,7 +2,7 @@
 
 **Check ID:** P0-PLAT-HEALTH-001  
 **Artefacto:** `artifacts/platform/health/platform_health_YYYY-MM-DD.md`  
-**Script:** `tools/platform_health.sh`  
+**Script:** `tools/platform/platform_health.sh`  
 **Repo root:** `/home/socadmin/soc-cases`  
 **Última actualización:** 2026-03-03
 
@@ -27,7 +27,7 @@ No incluye:
 
 En la máquina del SOC (usuario `socadmin`):
 
-- Repo del SOC clonado en `/home/socadmin/soc-cases` y con permisos de ejecución sobre `tools/platform_health.sh`.
+- Repo del SOC clonado en `/home/socadmin/soc-cases` y con permisos de ejecución sobre `tools/platform/platform_health.sh`.
 - Docker y Docker Compose operativos.
 - Stack Wazuh single-node desplegado con compose en:
   - `/home/socadmin/wazuh-docker/single-node/docker-compose.yml`
@@ -63,8 +63,8 @@ cd /home/socadmin/soc-cases
 2) Verificar que el script existe y es ejecutable:
 
 ```bash
-ls -l tools/platform_health.sh
-chmod +x tools/platform_health.sh
+ls -l tools/platform/platform_health.sh
+chmod +x tools/platform/platform_health.sh
 ```
 
 3) (Opcional) Verificar que el archivo de secretos existe y permisos:
@@ -77,7 +77,7 @@ chmod 600 ~/.secrets/mini-soc.env
 4) Ejecutar el check:
 
 ```bash
-bash tools/platform_health.sh
+bash tools/platform/platform_health.sh
 ```
 
 5) Confirmar que se generó el artefacto (por fecha):
@@ -153,7 +153,7 @@ Artifact: artifacts/platform/health/platform_health_YYYY-MM-DD.md
 ## Troubleshooting (mínimo)
 
 ### `permission denied` al ejecutar el script
-Solución: `chmod +x tools/platform_health.sh` o ejecutar con `bash tools/platform_health.sh`.
+Solución: `chmod +x tools/platform/platform_health.sh` o ejecutar con `bash tools/platform/platform_health.sh`.
 
 ### No aparece el artefacto
 - Verificar cwd (estar en el repo), permisos de escritura y path `artifacts/platform/health/`.

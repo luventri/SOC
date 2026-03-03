@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ART_DIR="${REPO_ROOT}/artifacts/platform/secrets"
 DATE_UTC="$(date -u +%F)"
 OUT="${ART_DIR}/secrets_audit_${DATE_UTC}.md"

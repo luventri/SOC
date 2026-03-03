@@ -60,4 +60,4 @@ done
 echo "[OK] Restore APPLY completed."
 echo "Next steps (manual, recommended):"
 echo "  docker compose -f ${WAZUH_COMPOSE} up -d"
-echo "  ./tools/platform_health.sh"
+echo "  ./tools/platform/platform_health.sh"

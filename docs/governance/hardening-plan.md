@@ -77,8 +77,8 @@ Commands:
 ```bash
 cd /home/socadmin/soc-cases
 tools/access-control/verify-users.sh
-tools/platform_health.sh
-tools/secrets_audit.sh
+tools/platform/platform_health.sh
+tools/platform/secrets_audit.sh
 ```
 
 Acceptance:
@@ -139,7 +139,7 @@ Commands:
 ```bash
 cd /home/socadmin/soc-cases
 find tools -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
-tools/secrets_audit.sh
+tools/platform/secrets_audit.sh
 ```
 
 Acceptance:

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Usage:
-#   ./tools/platform_health.sh               # uses today's date
-#   ./tools/platform_health.sh 2026-02-24    # uses provided date (YYYY-MM-DD)
+#   ./tools/platform/platform_health.sh               # uses today's date
+#   ./tools/platform/platform_health.sh 2026-02-24    # uses provided date (YYYY-MM-DD)
 
 DATE="${1:-$(date +%F)}"
 OUT="artifacts/platform/health/platform_health_${DATE}.md"

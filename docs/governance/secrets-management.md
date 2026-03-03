@@ -35,8 +35,8 @@ This document defines how secrets/tokens are handled in this repository so they 
 |---|---|---|
 | `ANALYST_PASS` | Wazuh / OpenSearch Security user password for the **Analyst** role used in dashboard | `tools/access-control/users.yml`, `tools/access-control/verify-users.sh` |
 | `LUCIANO_VENTRICE_PASS` | Wazuh / OpenSearch Security user password for additional **Analyst-equivalent** user | `tools/access-control/users.yml`, `docs/governance/access-control.md` |
-| `WAZUH_INDEXER_USER` | OpenSearch/Indexer basic auth username for platform health checks | `tools/platform_health.sh` |
-| `WAZUH_INDEXER_PASS` | OpenSearch/Indexer basic auth password for platform health checks | `tools/platform_health.sh` |
+| `WAZUH_INDEXER_USER` | OpenSearch/Indexer basic auth username for platform health checks | `tools/platform/platform_health.sh` |
+| `WAZUH_INDEXER_PASS` | OpenSearch/Indexer basic auth password for platform health checks | `tools/platform/platform_health.sh` |
 | `WAZUH_DASHBOARD_USER` | Dashboard service account username (OpenSearch Dashboards) | local stack runtime, `~/.secrets/mini-soc.env` |
 | `WAZUH_DASHBOARD_PASS` | Dashboard service account password (OpenSearch Dashboards) | local stack runtime, `~/.secrets/mini-soc.env` |
 | `WAZUH_API_USER` | Wazuh API username used by dashboard plugin connection | local stack runtime, `~/.secrets/mini-soc.env` |
@@ -56,7 +56,7 @@ Notes:
 - Rotation steps (high level):
   1. Create the new secret **outside the repo** and update `~/.secrets/mini-soc.env` (keep file mode `0600`).
   2. Apply the change in the relevant platform/user management procedure (e.g., OpenSearch Security internal users).
-  3. Re-run verification scripts that rely on the secret (e.g., `tools/access-control/verify-users.sh`, `tools/platform_health.sh`).
+  3. Re-run verification scripts that rely on the secret (e.g., `tools/access-control/verify-users.sh`, `tools/platform/platform_health.sh`).
   4. Revoke/disable the previous credential in the platform (or remove the old env var name if no longer needed).
 
 ### Revocation (minimum)
