@@ -81,6 +81,20 @@ Goal: not only SIEM+single Windows endpoint. Add Linux endpoint and perimeter te
 
 ---
 
+## Wave 1.5 (1–2 weeks) — Baseline Stabilization
+Goal: consolidate a clean and deterministic lab baseline before Wave 2 integrations (case management, SOAR, TIP).
+
+### BSL (Routing, source scope, pfSense normalization, DQ alignment)
+| id | area | capability | sub-capability | priority | owner_role | status | evidence_paths | acceptance_criteria (DoD) | next_action |
+|---|---|---|---|---|---|---|---|---|---|
+| NET-BSL-001 | Wave 1.5 | Network baseline | Force `soc-core` Internet egress through pfSense only | P0 | SOC Engineer | DONE | docs/infra/ola1_5-core-egress.md; artifacts/infra/ola1_5-core-egress_2026-03-11.md | `ip route get 8.8.8.8` resolves via pfSense LAN gateway; no competing default route for Internet; SOC services validated after change | Continue with LAB-BSL-002 (telemetry scope hygiene) |
+| LAB-BSL-002 | Wave 1.5 | Telemetry scope hygiene | Remove or isolate `LAPTOP-RH48MVJ8` from lab detection baseline | P1 | Telemetry Owner + SOC Engineer | TODO | docs/governance/lab-scope.md; artifacts/telemetry/lab_scope_YYYY-MM-DD.md | Host noise excluded from lab detections/gates or explicitly segmented with documented rationale | Choose approach (exclude filters vs agent disable) and validate dashboards/gates |
+| LAB-BSL-003 | Wave 1.5 | Lab source model | Deploy 2 Windows endpoints + 1 AD server behind pfSense | P0 | SOC Engineer | TODO | docs/infra/ola1_5-lab-sources.md; artifacts/infra/ola1_5-lab-sources_YYYY-MM-DD.md; artifacts/onboarding/windows/* | New assets provisioned, networked through pfSense, enrolled in Wazuh, and producing expected telemetry by role | Define VM specs, IP plan, and onboarding order |
+| NET-BSL-004 | Wave 1.5 | Network telemetry quality | Parse/normalize pfSense logs into firewall-friendly fields | P1 | Telemetry Owner | TODO | docs/runbooks/onboarding/network/pfsense_parsing.md; tools/dq/network_pfsense_gate.sh; artifacts/telemetry/network/pfsense_parsing_YYYY-MM-DD.md | pfSense events searchable by structured fields (action/proto/src/dst/ports), not only `full_log` raw text | Implement custom decoder/rules and validate with live samples |
+| DQ-BSL-005 | Wave 1.5 | DQ & metrics alignment | Recalibrate gates/weekly metrics to new baseline | P1 | Telemetry Owner + SOC Manager | TODO | docs/governance/metrics.md; docs/governance/cadence.md; artifacts/metrics/weekly_metrics_YYYY-WW.md; artifacts/dq/network/* | Gates stable across two cycles; metrics reflect scoped sources; threshold exceptions documented | Run two weekly cycles and tune thresholds |
+
+---
+
 ## Wave 2 (2–4 weeks) — Case Management + SOAR + TIP (VMs separated)
 Goal: operate like a SOC with dedicated case management, automation, and threat intel.
 
